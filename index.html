@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <title>HR Content Helper</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
-    /* Completely redesigned CSS with modern, professional styling */
     * {
       margin: 0;
       padding: 0;
@@ -13,8 +13,8 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-      background: linear-gradient(135deg, #fff8f0 0%, #fffbf7 100%);
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #fff8f0, #fffbf7);
       min-height: 100vh;
       padding: 20px;
       color: #2c2c2c;
@@ -22,452 +22,191 @@
 
     h1 {
       text-align: center;
-      margin-bottom: 40px;
+      margin-bottom: 30px;
       font-size: 32px;
       font-weight: 700;
-      background: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
+      background: linear-gradient(135deg, #ff8c42, #ff6b35);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    h3 {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 20px;
-      color: #2c2c2c;
-    }
-
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #666;
-      margin-bottom: 8px;
     }
 
     .card {
-      background: rgba(255, 255, 255, 0.95);
-      border: 2px solid #ffe0cc;
+      background: #ffffff;
       border-radius: 12px;
-      padding: 32px;
-      box-shadow: 0 8px 32px rgba(255, 107, 53, 0.1);
-      margin: 0 auto 20px;
+      padding: 30px;
       max-width: 800px;
-      backdrop-filter: blur(8px);
+      margin: auto;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
     }
 
-    input, textarea {
-      width: 100%;
-      padding: 12px 14px;
-      margin: 0 0 18px 0;
-      border: 2px solid #f0d4bb;
-      border-radius: 8px;
-      background: #fafaf8;
-      color: #2c2c2c;
-      font-size: 14px;
-      font-family: inherit;
-      transition: all 0.3s ease;
-    }
-
-    input::placeholder,
-    textarea::placeholder {
-      color: #bbb;
-    }
-
-    input:focus,
-    textarea:focus {
-      outline: none;
-      border-color: #ff8c42;
-      background: #fff;
-      box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: block;
     }
 
     textarea {
-      min-height: 120px;
+      width: 100%;
+      min-height: 130px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 2px solid #f0d4bb;
+      font-size: 14px;
+      margin-bottom: 16px;
       resize: vertical;
     }
 
     button {
-      padding: 11px 20px;
-      font-size: 14px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
       font-weight: 600;
       cursor: pointer;
       margin-right: 8px;
-      margin-bottom: 10px;
-      border: none;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
+      background: linear-gradient(135deg, #ff8c42, #ff6b35);
       color: white;
-      transition: all 0.3s ease;
     }
 
     button.secondary {
-      background: #fff;
-      color: #ff8c42;
+      background: #ffffff;
+      color: #ff6b35;
       border: 1px solid #ffd0aa;
     }
 
-    button.secondary:hover {
-      background: #fff7f0;
-    }
-
     button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 16px rgba(255, 107, 53, 0.3);
-    }
-
-    button:active {
-      transform: translateY(0);
-    }
-
-    .tabs button {
-      border: none;
-      background: #f5f5f5;
-      padding: 10px 18px;
-      margin-right: 6px;
-      border-radius: 6px 6px 0 0;
-      color: #666;
-      font-weight: 500;
-      transition: all 0.3s ease;
-      margin-bottom: 0;
-    }
-
-    .tabs button:hover {
-      background: #e8e8e8;
-      transform: translateY(0);
-    }
-
-    /* Updated active tab styling with teal accent color */
-    .tabs button.active {
-      background: #e8f8f5;
-      border: 2px solid #20b2aa;
-      border-bottom: none;
-      color: #20b2aa;
-      box-shadow: none;
-    }
-
-    .tabs {
-      display: flex;
-      margin-bottom: 0;
-      border-bottom: 2px solid #ffe0cc;
-    }
-
-    #loginForm,
-    #signupForm {
-      animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
+      opacity: 0.9;
     }
 
     #output {
-      margin-top: 12px;
+      margin-top: 16px;
       padding: 16px;
-      border: 2px solid #f0d4bb;
-      min-height: 120px;
-      background: #fafaf8;
-      white-space: pre-wrap;
       border-radius: 8px;
+      background: #fafaf8;
+      border: 2px solid #f0d4bb;
+      white-space: pre-wrap;
       font-size: 14px;
       line-height: 1.6;
-      color: #2c2c2c;
+      min-height: 120px;
     }
 
-    .hidden {
+    /* ================= LINKEDIN VISUAL TEMPLATE ================= */
+
+    #cleanTemplate {
+      width: 1080px;
+      min-height: 1080px;
+      background: #ffffff;
+      padding: 70px 80px;
+      border-radius: 20px;
       display: none;
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      color: #1f2937;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
     }
 
-    .top-right {
+    .ct-header {
+      border-left: 8px solid #2563eb;
+      padding-left: 20px;
+      font-size: 42px;
+      font-weight: 700;
+      margin-bottom: 40px;
+      color: #111827;
+    }
+
+    .ct-content {
+      font-size: 26px;
+      line-height: 1.55;
+      white-space: pre-wrap; /* keeps exact content */
+    }
+
+    .ct-footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 18px;
+      color: #6b7280;
       text-align: right;
-      margin-bottom: 20px;
-      font-size: 13px;
-      color: #666;
-    }
-
-    /* Updated link button to teal accent color */
-    .link-btn {
-      border: none;
-      background: transparent;
-      color: #20b2aa;
-      cursor: pointer;
-      padding: 0;
-      font-weight: 600;
-      transition: color 0.3s ease;
-    }
-
-    .link-btn:hover {
-      color: #ff8c42;
-    }
-
-    p {
-      font-size: 13px;
-      margin-top: 8px;
-      color: #d97706;
-    }
-
-    p:empty {
-      display: none;
-    }
-
-    .actions-row {
-      margin-top: 8px;
-      margin-bottom: 8px;
-    }
-
-    @media (max-width: 640px) {
-      h1 {
-        font-size: 24px;
-        margin-bottom: 30px;
-      }
-
-      .card {
-        padding: 20px;
-      }
-
-      .tabs button {
-        padding: 8px 14px;
-        font-size: 13px;
-      }
-
-      input, textarea {
-        font-size: 16px;
-      }
     }
   </style>
 
-  <!-- jsPDF for PDF export -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- html2canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
+
 <body>
-  <h1>HR Content Helper</h1>
 
-  <!-- Auth section -->
-  <div id="authSection" class="card">
-    <div class="tabs">
-      <button id="loginTab" class="active" onclick="showLogin()">Login</button>
-      <button id="signupTab" onclick="showSignup()">Sign up</button>
-    </div>
+<h1>HR Content Helper</h1>
 
-    <div id="loginForm">
-      <h3>Login</h3>
-      <label>Email</label>
-      <input type="email" id="loginEmail" placeholder="Enter your email" />
-      <label>Password</label>
-      <input type="password" id="loginPassword" placeholder="Enter your password" />
-      <button onclick="handleLogin()">Login</button>
-      <p id="loginMsg"></p>
-    </div>
+<div class="card">
+  <label>Paste your rough HR / Job post:</label>
+  <textarea id="inputText" placeholder="Paste raw job description or hiring content..."></textarea>
 
-    <div id="signupForm" class="hidden">
-      <h3>Sign up</h3>
-      <label>Email</label>
-      <input type="email" id="signupEmail" placeholder="Enter your email" />
-      <label>Password</label>
-      <input type="password" id="signupPassword" placeholder="Create a password" />
-      <button onclick="handleSignup()">Sign up</button>
-      <p id="signupMsg"></p>
-    </div>
-  </div>
+  <button onclick="enhanceContent()">Enhance Content</button>
+  <button class="secondary" onclick="applyCleanTemplateAndDownload()">
+    Apply Template & Download
+  </button>
 
-  <!-- App section (hidden until login) -->
-  <div id="appSection" class="card hidden">
-    <div class="top-right">
-      Logged in as <span id="userEmail"></span> |
-      <button class="link-btn" onclick="logout()">Logout</button>
-    </div>
+  <div id="output"></div>
+</div>
 
-    <label>Paste your rough job post here:</label>
-    <textarea id="inputText" placeholder="Type or paste HR content..."></textarea>
+<!-- Hidden LinkedIn Template -->
+<div id="cleanTemplate">
+  <div class="ct-header">Hiring Announcement</div>
+  <div class="ct-content" id="cleanTemplateText"></div>
+  <div class="ct-footer">© HR Team | LinkedIn</div>
+</div>
 
-    <button onclick="enhanceContent()">Enhance Content</button>
+<script>
+  // ---------------- ENHANCE CONTENT ----------------
+  async function enhanceContent() {
+    const input = document.getElementById("inputText").value;
+    const output = document.getElementById("output");
 
-    <div class="actions-row">
-      <h3 style="display:inline-block; margin-right:12px;">Enhanced version:</h3>
-      <button class="secondary" onclick="copyEnhanced()">Copy to clipboard</button>
-      <button class="secondary" onclick="downloadPDF()">Download as PDF</button>
-    </div>
-
-    <div id="output"></div>
-  </div>
-
-  <script>
-    // ---------- Auth UI toggle ----------
-    function showLogin() {
-      document.getElementById("loginForm").classList.remove("hidden");
-      document.getElementById("signupForm").classList.add("hidden");
-      document.getElementById("loginTab").classList.add("active");
-      document.getElementById("signupTab").classList.remove("active");
+    if (!input.trim()) {
+      output.innerText = "Please enter some content first.";
+      return;
     }
 
-    function showSignup() {
-      document.getElementById("signupForm").classList.remove("hidden");
-      document.getElementById("loginForm").classList.add("hidden");
-      document.getElementById("signupTab").classList.add("active");
-      document.getElementById("loginTab").classList.remove("active");
-    }
+    output.innerText = "Enhancing content...";
 
-    // ---------- Simple localStorage auth (demo only) ----------
-    function getUsers() {
-      return JSON.parse(localStorage.getItem("users") || "{}");
-    }
-
-    function saveUsers(users) {
-      localStorage.setItem("users", JSON.stringify(users));
-    }
-
-    function handleSignup() {
-      const email = document.getElementById("signupEmail").value.trim();
-      const password = document.getElementById("signupPassword").value;
-      const msg = document.getElementById("signupMsg");
-      msg.textContent = "";
-
-      if (!email || !password) {
-        msg.textContent = "Please enter email and password.";
-        return;
-      }
-
-      const users = getUsers();
-      if (users[email]) {
-        msg.textContent = "User already exists. Please login.";
-        return;
-      }
-
-      users[email] = { password };
-      saveUsers(users);
-
-      msg.textContent = "Signup successful! You can login now.";
-      document.getElementById("signupEmail").value = "";
-      document.getElementById("signupPassword").value = "";
-
-      showLogin();
-    }
-
-    function handleLogin() {
-      const email = document.getElementById("loginEmail").value.trim();
-      const password = document.getElementById("loginPassword").value;
-      const msg = document.getElementById("loginMsg");
-      msg.textContent = "";
-
-      const users = getUsers();
-      if (!users[email] || users[email].password !== password) {
-        msg.textContent = "Invalid email or password.";
-        return;
-      }
-
-      localStorage.setItem("currentUser", email);
-      openApp(email);
-    }
-
-    function openApp(email) {
-      document.getElementById("authSection").classList.add("hidden");
-      document.getElementById("appSection").classList.remove("hidden");
-      document.getElementById("userEmail").innerText = email;
-    }
-
-    function logout() {
-      localStorage.removeItem("currentUser");
-      document.getElementById("appSection").classList.add("hidden");
-      document.getElementById("authSection").classList.remove("hidden");
-    }
-
-    // Auto-login if user already logged in
-    window.onload = () => {
-      const current = localStorage.getItem("currentUser");
-      if (current) {
-        openApp(current);
-      }
-    };
-
-    // ---------- Gemini call ----------
-    async function enhanceContent() {
-      const input = document.getElementById("inputText").value;
-      const outputDiv = document.getElementById("output");
-
-      if (!input.trim()) {
-        outputDiv.innerText = "Please enter some text first.";
-        return;
-      }
-
-      outputDiv.innerText = "Thinking with Gemini…";
-
-      try {
-        const res = await fetch("http://localhost:5000/enhance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: input })
-        });
-
-        const data = await res.json();
-
-        if (data.enhanced) {
-          outputDiv.innerText = data.enhanced;
-        } else if (data.error) {
-          outputDiv.innerText = "Error from server: " + data.error;
-        } else {
-          outputDiv.innerText = "Unknown error from server.";
-        }
-      } catch (err) {
-        console.error(err);
-        outputDiv.innerText = "Could not connect to backend. Is it running?";
-      }
-    }
-
-    // ---------- Copy to clipboard ----------
-    async function copyEnhanced() {
-      const outputDiv = document.getElementById("output");
-      const text = outputDiv.innerText.trim();
-      if (!text) {
-        alert("Nothing to copy yet. Generate enhanced content first.");
-        return;
-      }
-
-      try {
-        await navigator.clipboard.writeText(text);
-        alert("Enhanced content copied to clipboard ✅");
-      } catch (err) {
-        console.error("Clipboard error:", err);
-        alert("Could not copy to clipboard.");
-      }
-    }
-
-    // ---------- Download as PDF ----------
-    async function downloadPDF() {
-      const outputDiv = document.getElementById("output");
-      const text = outputDiv.innerText.trim();
-      if (!text) {
-        alert("Nothing to export. Generate enhanced content first.");
-        return;
-      }
-
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({
-        unit: "pt",
-        format: "a4"
+    try {
+      const res = await fetch("http://localhost:5000/enhance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: input })
       });
 
-      const margin = 40;
-      const maxWidth = 515; // a4 width (595) - margins
-
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(12);
-
-      doc.text("HR Content Helper – Enhanced Job Post", margin, margin);
-      doc.setFontSize(11);
-
-      const lines = doc.splitTextToSize(text, maxWidth);
-      doc.text(lines, margin, margin + 24);
-
-      doc.save("enhancer.pdf");
+      const data = await res.json();
+      output.innerText = data.enhanced || "Error generating content.";
+    } catch (err) {
+      output.innerText = "Backend not reachable.";
     }
-  </script>
+  }
+
+  // ---------------- APPLY TEMPLATE & DOWNLOAD ----------------
+  async function applyCleanTemplateAndDownload() {
+    const enhancedText = document.getElementById("output").innerText.trim();
+    if (!enhancedText) {
+      alert("Generate enhanced content first.");
+      return;
+    }
+
+    // Keep exact content
+    document.getElementById("cleanTemplateText").innerText = enhancedText;
+
+    const template = document.getElementById("cleanTemplate");
+    template.style.display = "block";
+
+    const canvas = await html2canvas(template, { scale: 2 });
+
+    const link = document.createElement("a");
+    link.download = "LinkedIn_Hiring_Post.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+
+    template.style.display = "none";
+  }
+</script>
+
 </body>
 </html>
