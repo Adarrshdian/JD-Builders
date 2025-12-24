@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>HR Content Helper</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #fff8f0, #fffbf7);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ff8c42, #ff6b35);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 800px;
+      margin: auto;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 130px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 2px solid #f0d4bb;
+      margin-bottom: 16px;
+    }
+
+    button {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      background: linear-gradient(135deg, #ff8c42, #ff6b35);
+      color: white;
+    }
+
+    button.secondary {
+      background: #fff;
+      color: #ff6b35;
+      border: 1px solid #ffd0aa;
+    }
+
+    #output {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 8px;
+      background: #fafaf8;
+      border: 2px solid #f0d4bb;
+      white-space: pre-wrap;
+      min-height: 120px;
+    }
+
+    /* ================= TEMPLATE ================= */
+
+    .template {
+      width: 1080px;
+      height: 1080px;
+      display: none;
+      position: relative;
+      color: #ffffff;
+    }
+
+    #templateImage {
+      background: url("/assets/bg2.png") center / cover no-repeat;
+    }
+
+    .title {
+      position: absolute;
+      top: 110px;
+      left: 100px;
+      font-size: 52px;
+      font-weight: 700;
+    }
+
+    .content {
+      position: absolute;
+      top: 210px;      /* moved up */
+      left: 100px;
+      width: 780px;
+      height: 720px;   /* increased height */
+      overflow: hidden;
+    }
+
+    .content-inner {
+      font-size: 24px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .content-inner strong {
+      display: block;
+      margin-top: 14px;
+      margin-bottom: 4px;
+      font-size: 26px;
+    }
+
+    footer {
+      position: absolute;
+      bottom: 70px;
+      right: 100px;
+      font-size: 18px;
+      opacity: 0.85;
+    }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+
+<body>
+
+<h1>HR Content Helper</h1>
+
+<div class="card">
+  <textarea id="inputText" placeholder="Paste HR / Job content here..."></textarea>
+
+  <button onclick="enhanceContent()">Enhance Content</button>
+  <br><br>
+
+  <button class="secondary" onclick="applyTemplateAndDownload()">
+    Download Image
+  </button>
+
+  <div id="output"></div>
+</div>
+
+<!-- TEMPLATE -->
+
+<div id="templateImage" class="template">
+  <div class="title">We Are Hiring</div>
+  <div class="content">
+    <div id="contentImage" class="content-inner"></div>
+  </div>
+  <footer>Apply Now</footer>
+</div>
+
+<script>
+  async function enhanceContent() {
+    const input = document.getElementById("inputText").value;
+    if (!input.trim()) return;
+
+    try {
+      const res = await fetch("http://localhost:5000/enhance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: input })
+      });
+      const data = await res.json();
+      document.getElementById("output").innerText = data.enhanced;
+    } catch {
+      document.getElementById("output").innerText = input;
+    }
+  }
+
+  function formatContent(text) {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\n\n/g, "<br><br>");
+  }
+
+  /* 🔥 SMART AUTO-FIT — NO FEATURE CHANGE */
+  function fitText(el, max = 24, min = 12) {
+    let size = max;
+    let lineHeight = 1.45;
+
+    el.style.fontSize = size + "px";
+    el.style.lineHeight = lineHeight;
+
+    while (el.scrollHeight > el.parentElement.clientHeight && size > min) {
+      size -= 0.5;
+      lineHeight -= 0.01;
+      el.style.fontSize = size + "px";
+      el.style.lineHeight = lineHeight;
+    }
+  }
+
+  async function applyTemplateAndDownload() {
+    const text = document.getElementById("output").innerText.trim();
+    if (!text) return alert("No content to export");
+
+    const template = document.getElementById("templateImage");
+    const contentEl = document.getElementById("contentImage");
+
+    contentEl.innerHTML = formatContent(text);
+    template.style.display = "block";
+
+    await new Promise(resolve => {
+      const img = new Image();
+      img.src = "/assets/bg2.png";
+      img.onload = resolve;
+    });
+
+    fitText(contentEl);
+
+    const canvas = await html2canvas(template, {
+      scale: 2,
+      useCORS: true
+    });
+
+    canvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "LinkedIn_Client_Template.png";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    template.style.display = "none";
+  }
+</script>
+
+</body>
+</html>
