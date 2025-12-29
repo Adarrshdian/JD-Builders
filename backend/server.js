@@ -1,15 +1,14 @@
-// backend/server.js (CommonJS, uses fetch + LLaMA via Groq)
+// backend/server.js (CommonJS, Node 18+, fetch + LLaMA via Groq)
 
 const express = require("express");
 const cors = require("cors");
-const bodyParser = require("body-parser");
-require("dotenv").config(); // loads backend/.env
+require("dotenv").config();
 const path = require("path");
 
 const app = express();
 app.use(cors());
-app.use(express.static(path.join(__dirname)));
 app.use(express.json());
+app.use(express.static(path.join(__dirname)));
 
 // ------------ LLaMA (Groq) setup ------------
 const apiKey = process.env.LLAMA_API_KEY;
@@ -19,37 +18,48 @@ if (!apiKey) {
   process.exit(1);
 }
 
-// Groq's OpenAI-compatible chat completions endpoint
+// Groq OpenAI-compatible endpoint
 const LLAMA_URL = "https://api.groq.com/openai/v1/chat/completions";
 
-// Call LLaMA using Node's built-in fetch (Node 18+)
-async function enhanceWithLlama(text) {
+// ------------ LLaMA CALLER (ARRAY-BASED) ------------
+async function enhanceWithLlamaFromArray(paramsArray) {
+  const formattedContent = paramsArray
+    .map(p => `${p.key}: ${p.value}`)
+    .join("\n");
+
   const systemPrompt = `
-You are an assistant for HR. Rewrite this job opening text as a clear,
-professional LinkedIn job post. Keep the same meaning, improve grammar,
-add structure and make it attractive but still professional.
+You are an HR content assistant.
+Convert the following job details into a clean, professional LinkedIn job post.
+
+Rules:
+- Keep meaning accurate
+- Improve clarity and grammar
+- Professional tone
+- Structured but concise
+- Suitable for a square LinkedIn post
+- At most 20-23 lines
+- No emojis
   `;
 
   const body = {
-    model: "llama-3.3-70b-versatile", // or another LLaMA model name from Groq
+    model: "llama-3.3-70b-versatile",
     messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: text },
+      { role: "system", content: systemPrompt.trim() },
+      { role: "user", content: formattedContent }
     ],
-    temperature: 0.7,
+    temperature: 0.6
   };
 
   const res = await fetch(LLAMA_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${apiKey}`
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(body)
   });
 
   const raw = await res.text();
-
   if (!res.ok) {
     throw new Error(`LLaMA HTTP error ${res.status}: ${raw}`);
   }
@@ -57,57 +67,126 @@ add structure and make it attractive but still professional.
   let data;
   try {
     data = JSON.parse(raw);
-  } catch (e) {
+  } catch {
     throw new Error(`Failed to parse LLaMA JSON: ${raw}`);
   }
 
-  // Expected OpenAI-style structure: choices[0].message.content
-  if (
-    !data.choices ||
-    !data.choices[0] ||
-    !data.choices[0].message ||
-    !data.choices[0].message.content
-  ) {
-    throw new Error(
-      "Unexpected LLaMA response format: " + JSON.stringify(data)
-    );
+  if (!data?.choices?.[0]?.message?.content) {
+    throw new Error("Unexpected LLaMA response format");
   }
 
   return data.choices[0].message.content;
 }
 
-// ------------ Routes ------------
+// ------------ PROMPT MODE (TEXT ONLY) ------------
+async function enhanceWithLlamaFromText(text) {
+  const systemPrompt = `
+You are an HR assistant.
+Rewrite the following content into a professional LinkedIn job post.
 
-// Optional health check
+Rules:
+- Improve grammar and clarity
+- Keep original meaning
+- Professional tone
+- Optimized for LinkedIn feed
+- Short and structured
+-atmost of 20-23 lines
+  `;
+
+  const body = {
+    model: "llama-3.3-70b-versatile",
+    messages: [
+      { role: "system", content: systemPrompt.trim() },
+      { role: "user", content: text }
+    ],
+    temperature: 0.6
+  };
+
+  const res = await fetch(LLAMA_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`
+    },
+    body: JSON.stringify(body)
+  });
+
+  const raw = await res.text();
+  if (!res.ok) {
+    throw new Error(`LLaMA HTTP error ${res.status}: ${raw}`);
+  }
+
+  const data = JSON.parse(raw);
+  return data.choices[0].message.content;
+}
+
+// ------------ ROUTES ------------
+
+// Health check
 app.get("/", (_req, res) => {
-  res.send("backend is running");
+  res.send("✅ backend is running");
 });
 
-// Main enhance endpoint your frontend calls
+// ---------- PROMPT MODE ----------
 app.post("/enhance", async (req, res) => {
   try {
-    console.log(req.body);
     const { text } = req.body;
-    console.log(text);
-    console.log(typeof text);
 
-    if (!text || text.trim() === "") {
+    if (!text || !text.trim()) {
       return res.status(400).json({ error: "Text input is required." });
     }
 
-    const enhanced = await enhanceWithLlama(text);
+    const enhanced = await enhanceWithLlamaFromText(text);
     res.json({ enhanced });
+
   } catch (error) {
-    console.error("❌ Error in /enhance endpoint:", error);
+    console.error("❌ Error in /enhance:", error);
     res.status(500).json({
-      error:
-        "Failed to enhance content due to an internal server error. " +
-        (error.message || ""),
+      error: "Failed to enhance content. " + (error.message || "")
     });
   }
 });
 
-// ------------ Start server ------------
+// ---------- FORM MODE ----------
+app.post("/formenhance", async (req, res) => {
+  try {
+    const {
+      companyName,
+      role,
+      skills,
+      eligibility,
+      extraFields = {}
+    } = req.body;
+
+    const params = [];
+
+    if (companyName) params.push({ key: "Company", value: companyName });
+    if (role) params.push({ key: "Role", value: role });
+    if (skills) params.push({ key: "Skills", value: skills });
+    if (eligibility) params.push({ key: "Eligibility", value: eligibility });
+
+    Object.entries(extraFields).forEach(([key, value]) => {
+      params.push({ key, value });
+    });
+
+    if (params.length === 0) {
+      return res.status(400).json({
+        error: "At least one form field is required."
+      });
+    }
+
+    const enhanced = await enhanceWithLlamaFromArray(params);
+    res.json({ enhanced });
+
+  } catch (error) {
+    console.error("❌ Error in /formenhance:", error);
+    res.status(500).json({
+      error: "Failed to enhance form content. " + (error.message || "")
+    });
+  }
+});
+
+// ------------ START SERVER ------------
 const PORT = 5000;
 app.listen(PORT, () => {
   console.log("✅ Backend running on http://localhost:" + PORT);

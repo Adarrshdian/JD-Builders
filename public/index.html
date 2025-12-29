@@ -5,6 +5,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- 🔥 Firebase SDKs (SCRIPT TAG VERSION – REQUIRED) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -29,19 +33,41 @@
       background: #fff;
       border-radius: 12px;
       padding: 30px;
-      max-width: 800px;
+      max-width: 1100px;
       margin: auto;
       box-shadow: 0 8px 30px rgba(0,0,0,0.08);
     }
 
-    textarea {
+    .auth-card {
+      max-width: 420px;
+      margin: auto auto 30px;
+      text-align: center;
+    }
+
+    .user-info {
+      text-align: right;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    button.logout {
+      background: none;
+      border: none;
+      color: #ff6b35;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    input, textarea {
       width: 100%;
-      min-height: 130px;
       padding: 12px;
       border-radius: 8px;
       border: 2px solid #f0d4bb;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
+      font-size: 14px;
     }
+
+    textarea { min-height: 160px; }
 
     button {
       padding: 10px 18px;
@@ -51,6 +77,7 @@
       font-weight: 600;
       background: linear-gradient(135deg, #ff8c42, #ff6b35);
       color: white;
+      margin-bottom: 6px;
     }
 
     button.secondary {
@@ -59,8 +86,16 @@
       border: 1px solid #ffd0aa;
     }
 
+    .dynamic-field {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .dynamic-field input { flex: 1; }
+
     #output {
-      margin-top: 16px;
+      margin-top: 20px;
       padding: 16px;
       border-radius: 8px;
       background: #fafaf8;
@@ -69,8 +104,31 @@
       min-height: 120px;
     }
 
-    /* ================= TEMPLATE ================= */
+    .split-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
 
+    .section {
+      padding: 20px;
+      border: 1px solid #f0d4bb;
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .section h3 {
+      margin-bottom: 12px;
+      color: #ff6b35;
+    }
+
+    @media (max-width: 768px) {
+      .split-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* TEMPLATE */
     .template {
       width: 1080px;
       height: 1080px;
@@ -93,10 +151,10 @@
 
     .content {
       position: absolute;
-      top: 210px;      /* moved up */
+      top: 210px;
       left: 100px;
       width: 780px;
-      height: 720px;   /* increased height */
+      height: 720px;
       overflow: hidden;
     }
 
@@ -104,13 +162,6 @@
       font-size: 24px;
       line-height: 1.45;
       white-space: pre-wrap;
-    }
-
-    .content-inner strong {
-      display: block;
-      margin-top: 14px;
-      margin-bottom: 4px;
-      font-size: 26px;
     }
 
     footer {
@@ -129,21 +180,57 @@
 
 <h1>HR Content Helper</h1>
 
-<div class="card">
-  <textarea id="inputText" placeholder="Paste HR / Job content here..."></textarea>
+<!-- 🔐 AUTH SECTION (Firebase) -->
+<div id="authSection" class="card auth-card">
+  <h3>Login / Signup</h3>
 
-  <button onclick="enhanceContent()">Enhance Content</button>
-  <br><br>
+  <input id="email" placeholder="Email" />
+  <input id="password" type="password" placeholder="Password" />
 
-  <button class="secondary" onclick="applyTemplateAndDownload()">
-    Download Image
-  </button>
+  <button onclick="signup()">Sign Up</button>
+  <button onclick="login()">Login</button>
 
+  <button class="secondary" onclick="googleLogin()">Continue with Google</button>
+</div>
+
+<div id="userBar" class="user-info" style="display:none">
+  Logged in as <span id="userName"></span>
+  <button class="logout" onclick="logout()">Logout</button>
+</div>
+
+<!-- APP -->
+<div id="appSection" class="card" style="display:none">
+
+  <div class="split-container">
+
+    <div class="section">
+      <h3>Prompt Mode</h3>
+      <textarea id="inputText" placeholder="Type your requirement here..."></textarea>
+      <button onclick="enhanceFromPrompt()">Enhance from Prompt</button>
+    </div>
+
+    <div class="section">
+      <h3>Form Mode</h3>
+      <input id="companyName" placeholder="Company Name" />
+      <input id="role" placeholder="Role" />
+      <input id="skills" placeholder="Skills (comma separated)" />
+      <input id="eligibility" placeholder="Eligibility Criteria" />
+
+      <div id="dynamicFields"></div>
+      <button class="secondary" onclick="addDynamicField()">+ Add Field</button>
+
+      <br><br>
+      <button onclick="enhanceFromForm()">Enhance from Form</button>
+    </div>
+
+  </div>
+
+  <br>
+  <button class="secondary" onclick="applyTemplateAndDownload()">Download Image</button>
   <div id="output"></div>
 </div>
 
 <!-- TEMPLATE -->
-
 <div id="templateImage" class="template">
   <div class="title">We Are Hiring</div>
   <div class="content">
@@ -153,80 +240,114 @@
 </div>
 
 <script>
-  async function enhanceContent() {
-    const input = document.getElementById("inputText").value;
-    if (!input.trim()) return;
+  /* ================= FIREBASE AUTH ================= */
 
-    try {
-      const res = await fetch("http://localhost:5000/enhance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: input })
-      });
-      const data = await res.json();
-      document.getElementById("output").innerText = data.enhanced;
-    } catch {
-      document.getElementById("output").innerText = input;
-    }
+  const firebaseConfig = {
+  apiKey: "AIzaSyDCjhZY39rCNytcO2kuo_8u5fZsbufDOM0",
+  authDomain: "hr-app-16c8e.firebaseapp.com",
+  projectId: "hr-app-16c8e",
+  storageBucket: "hr-app-16c8e.firebasestorage.app",
+  messagingSenderId: "624300808534",
+  appId: "1:624300808534:web:f93f58ad88fde1bff9def7",
+  measurementId: "G-1Q58HEJ7R5"
+};
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  auth.onAuthStateChanged(user => {
+    if (user) openApp(user);
+  });
+
+  function signup() {
+    auth.createUserWithEmailAndPassword(email.value, password.value)
+      .catch(err => alert(err.message));
+  }
+
+  function login() {
+    auth.signInWithEmailAndPassword(email.value, password.value)
+      .catch(err => alert(err.message));
+  }
+
+  function googleLogin() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider)
+      .catch(err => alert(err.message));
+  }
+
+  function logout() {
+    auth.signOut();
+    localStorage.clear();
+    location.reload();
+  }
+
+  function openApp(user) {
+    authSection.style.display = "none";
+    appSection.style.display = "block";
+    userBar.style.display = "block";
+    userName.innerText = user.email;
+  }
+
+  /* ================= EXISTING APP LOGIC ================= */
+
+  function addDynamicField() {
+    const div = document.createElement("div");
+    div.className = "dynamic-field";
+    div.innerHTML = `<input class="key" placeholder="Key"><input class="value" placeholder="Value">`;
+    dynamicFields.appendChild(div);
+  }
+
+  function collectDynamicFields() {
+    const obj = {};
+    document.querySelectorAll(".dynamic-field").forEach(r => {
+      const k = r.querySelector(".key").value.trim();
+      const v = r.querySelector(".value").value.trim();
+      if (k && v) obj[k] = v;
+    });
+    return obj;
+  }
+
+  async function enhanceFromPrompt() {
+    const text = inputText.value.trim();
+    if (!text) return;
+    const r = await fetch("http://localhost:5000/enhance", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    });
+    output.innerText = (await r.json()).enhanced;
+  }
+
+  async function enhanceFromForm() {
+    const payload = {
+      companyName: companyName.value,
+      role: role.value,
+      skills: skills.value,
+      eligibility: eligibility.value,
+      extraFields: collectDynamicFields()
+    };
+    const r = await fetch("http://localhost:5000/formenhance", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    output.innerText = (await r.json()).enhanced;
   }
 
   function formatContent(text) {
-    return text
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-      .replace(/\n\n/g, "<br><br>");
-  }
-
-  /* 🔥 SMART AUTO-FIT — NO FEATURE CHANGE */
-  function fitText(el, max = 24, min = 12) {
-    let size = max;
-    let lineHeight = 1.45;
-
-    el.style.fontSize = size + "px";
-    el.style.lineHeight = lineHeight;
-
-    while (el.scrollHeight > el.parentElement.clientHeight && size > min) {
-      size -= 0.5;
-      lineHeight -= 0.01;
-      el.style.fontSize = size + "px";
-      el.style.lineHeight = lineHeight;
-    }
+    return text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
   }
 
   async function applyTemplateAndDownload() {
-    const text = document.getElementById("output").innerText.trim();
-    if (!text) return alert("No content to export");
-
-    const template = document.getElementById("templateImage");
-    const contentEl = document.getElementById("contentImage");
-
-    contentEl.innerHTML = formatContent(text);
-    template.style.display = "block";
-
-    await new Promise(resolve => {
-      const img = new Image();
-      img.src = "/assets/bg2.png";
-      img.onload = resolve;
-    });
-
-    fitText(contentEl);
-
-    const canvas = await html2canvas(template, {
-      scale: 2,
-      useCORS: true
-    });
-
-    canvas.toBlob(blob => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "LinkedIn_Client_Template.png";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    });
-
-    template.style.display = "none";
+    if (!output.innerText.trim()) return;
+    contentImage.innerHTML = formatContent(output.innerText);
+    templateImage.style.display = "block";
+    const canvas = await html2canvas(templateImage, { scale: 2 });
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL();
+    a.download = "LinkedIn_Client_Template.png";
+    a.click();
+    templateImage.style.display = "none";
   }
 </script>
 
