@@ -2,8 +2,8 @@
 
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
 const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 app.use(cors());
@@ -21,24 +21,59 @@ if (!apiKey) {
 // Groq OpenAI-compatible endpoint
 const LLAMA_URL = "https://api.groq.com/openai/v1/chat/completions";
 
-// ------------ LLaMA CALLER (ARRAY-BASED) ------------
-async function enhanceWithLlamaFromArray(paramsArray) {
+// ------------ LLaMA CALLER (ARRAY-BASED) - MULTI-VARIANT ------------
+async function enhanceWithLlamaFromArray(paramsArray, tone = 'professional') {
   const formattedContent = paramsArray
     .map(p => `${p.key}: ${p.value}`)
     .join("\n");
 
-  const systemPrompt = `
-You are an HR content assistant.
-Convert the following job details into a clean, professional LinkedIn job post.
+  const toneInstructions = {
+    professional: 'Use formal, corporate language. Professional and polished.',
+    friendly: 'Use warm, conversational language. Approachable and engaging.',
+    concise: 'Use brief, direct language. Clear and to the point.',
+    enthusiastic: 'Use energetic, exciting language. Dynamic and passionate.'
+  };
 
-Rules:
+  const toneGuide = toneInstructions[tone] || toneInstructions.professional;
+
+  // Generate 3 variants in one call
+  const systemPrompt = `
+You are an HR content assistant. Generate 3 different versions of job posting content:
+
+1. SHORT LINKEDIN POST (150-200 words)
+- Brief and engaging
+- Suitable for LinkedIn feed
+- 8-12 lines maximum
+- ${toneGuide}
+
+2. LONG LINKEDIN POST (300-400 words)
+- Detailed and comprehensive
+- Include company culture, benefits, growth opportunities
+- 20-25 lines
+- ${toneGuide}
+
+3. ATS-FRIENDLY JOB DESCRIPTION (250-350 words)
+- Structured format: Overview, Responsibilities, Requirements, Benefits
+- Keyword-optimized
+- Clear sections with bullet points
+- Professional tone (regardless of selected tone)
+
+Format your response EXACTLY like this:
+
+=== SHORT POST ===
+[Short post content here]
+
+=== LONG POST ===
+[Long post content here]
+
+=== ATS DESCRIPTION ===
+[ATS description content here]
+
+Rules for all variants:
 - Keep meaning accurate
 - Improve clarity and grammar
-- Professional tone
-- Structured but concise
-- Suitable for a square LinkedIn post
-- At most 20-23 lines
 - No emojis
+- Professional formatting
   `;
 
   const body = {
@@ -47,7 +82,7 @@ Rules:
       { role: "system", content: systemPrompt.trim() },
       { role: "user", content: formattedContent }
     ],
-    temperature: 0.6
+    temperature: 0.7
   };
 
   const res = await fetch(LLAMA_URL, {
@@ -78,19 +113,54 @@ Rules:
   return data.choices[0].message.content;
 }
 
-// ------------ PROMPT MODE (TEXT ONLY) ------------
-async function enhanceWithLlamaFromText(text) {
-  const systemPrompt = `
-You are an HR assistant.
-Rewrite the following content into a professional LinkedIn job post.
+// ------------ PROMPT MODE (TEXT ONLY) - MULTI-VARIANT ------------
+async function enhanceWithLlamaFromText(text, tone = 'professional') {
+  const toneInstructions = {
+    professional: 'Use formal, corporate language. Professional and polished.',
+    friendly: 'Use warm, conversational language. Approachable and engaging.',
+    concise: 'Use brief, direct language. Clear and to the point.',
+    enthusiastic: 'Use energetic, exciting language. Dynamic and passionate.'
+  };
 
-Rules:
+  const toneGuide = toneInstructions[tone] || toneInstructions.professional;
+
+  const systemPrompt = `
+You are an HR assistant. Generate 3 different versions of job posting content:
+
+1. SHORT LINKEDIN POST (150-200 words)
+- Brief and engaging
+- Suitable for LinkedIn feed
+- 8-12 lines maximum
+- ${toneGuide}
+
+2. LONG LINKEDIN POST (300-400 words)
+- Detailed and comprehensive
+- Include company culture, benefits, growth opportunities
+- 20-25 lines
+- ${toneGuide}
+
+3. ATS-FRIENDLY JOB DESCRIPTION (250-350 words)
+- Structured format: Overview, Responsibilities, Requirements, Benefits
+- Keyword-optimized
+- Clear sections with bullet points
+- Professional tone (regardless of selected tone)
+
+Format your response EXACTLY like this:
+
+=== SHORT POST ===
+[Short post content here]
+
+=== LONG POST ===
+[Long post content here]
+
+=== ATS DESCRIPTION ===
+[ATS description content here]
+
+Rules for all variants:
 - Improve grammar and clarity
 - Keep original meaning
-- Professional tone
-- Optimized for LinkedIn feed
-- Short and structured
--atmost of 20-23 lines
+- No emojis
+- Professional formatting
   `;
 
   const body = {
@@ -99,7 +169,7 @@ Rules:
       { role: "system", content: systemPrompt.trim() },
       { role: "user", content: text }
     ],
-    temperature: 0.6
+    temperature: 0.7
   };
 
   const res = await fetch(LLAMA_URL, {
@@ -127,16 +197,25 @@ app.get("/", (_req, res) => {
   res.send("✅ backend is running");
 });
 
+// Health check endpoint
+app.get("/health", (_req, res) => {
+  res.json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    version: "1.0.0"
+  });
+});
+
 // ---------- PROMPT MODE ----------
 app.post("/enhance", async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, tone } = req.body;
 
     if (!text || !text.trim()) {
       return res.status(400).json({ error: "Text input is required." });
     }
 
-    const enhanced = await enhanceWithLlamaFromText(text);
+    const enhanced = await enhanceWithLlamaFromText(text, tone);
     res.json({ enhanced });
 
   } catch (error) {
@@ -155,6 +234,7 @@ app.post("/formenhance", async (req, res) => {
       role,
       skills,
       eligibility,
+      tone,
       extraFields = {}
     } = req.body;
 
@@ -175,7 +255,7 @@ app.post("/formenhance", async (req, res) => {
       });
     }
 
-    const enhanced = await enhanceWithLlamaFromArray(params);
+    const enhanced = await enhanceWithLlamaFromArray(params, tone);
     res.json({ enhanced });
 
   } catch (error) {
